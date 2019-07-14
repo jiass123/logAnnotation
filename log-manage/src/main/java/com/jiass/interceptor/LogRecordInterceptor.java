@@ -1,7 +1,6 @@
 package com.jiass.interceptor;
 
 import com.jiass.annotation.LogRecord;
-import com.jiass.entity.LogInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,7 +11,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -25,16 +24,17 @@ import java.util.Optional;
 public class LogRecordInterceptor implements HandlerInterceptor {
 
     private Logger log = LoggerFactory.getLogger(getClass());
-    private ThreadLocal<LocalDateTime> threadLocal = new ThreadLocal();
+    private ThreadLocal<Date> threadLocal = new ThreadLocal();
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         Class<?> clazz = ((HandlerMethod) handler).getBean().getClass();
         String className = clazz.getSimpleName();
         Method method = ((HandlerMethod) handler).getMethod();
-        LocalDateTime now = LocalDateTime.now();
-        String time = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
-        threadLocal.set(now);
+        Date currentDate = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String time = format.format(currentDate);
+        threadLocal.set(currentDate);
         String threadName = Thread.currentThread().getName();
         if (method.isAnnotationPresent(LogRecord.class)) {
             String methodName = method.getName();
@@ -51,9 +51,10 @@ public class LogRecordInterceptor implements HandlerInterceptor {
         String threadName = Thread.currentThread().getName();
         if (method.isAnnotationPresent(LogRecord.class)) {
             String methodName = method.getName();
-            LocalDateTime now = LocalDateTime.now();
-            String time = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
-            int i = now.getSecond() - threadLocal.get().getSecond();
+            Date currentDate = new Date();
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String time = format.format(currentDate);
+            long i = System.currentTimeMillis() - threadLocal.get().getTime();
             log.info("类:【{}】的:【{}】方法结束执行,线程名称:【{}】,结束时间:【{}】,执行总时间为:【{}】毫秒", className, methodName, threadName, time, i);
         }
     }
@@ -68,9 +69,10 @@ public class LogRecordInterceptor implements HandlerInterceptor {
                     String threadName = Thread.currentThread().getName();
                     if (method.isAnnotationPresent(LogRecord.class)) {
                         String methodName = method.getName();
-                        LocalDateTime now = LocalDateTime.now();
-                        String time = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
-                        int i = now.getSecond() - threadLocal.get().getSecond();
+                        Date currentDate = new Date();
+                        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        String time = format.format(currentDate);
+                        long i = System.currentTimeMillis() - threadLocal.get().getTime();
                         log.info("类:【{}】的:【{}】方法结束执行,出现异常:【{}】线程名称:【{}】,结束时间:【{}】,执行总时间为:【{}】毫秒", className, methodName, ex, threadName,time,i);
                     }
                 }
